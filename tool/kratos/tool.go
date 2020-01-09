@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/joho/godotenv"
 	"github.com/urfave/cli"
 )
 
@@ -179,10 +180,8 @@ func (t Tool) toolPath() string {
 	if name == "" {
 		name = t.Name
 	}
-	if gobin := os.Getenv("GOBIN"); len(gobin) > 0 {
-		return filepath.Join(gobin, name)
-	}
-	return filepath.Join(gopath(), "bin", name)
+
+	return filepath.Join(gobin(), name)
 }
 
 func (t Tool) installed() bool {
@@ -223,6 +222,23 @@ func (t Tool) updated() bool {
 		}
 	}
 	return false
+}
+
+func gobin() string {
+	if bin := os.Getenv("GOBIN"); len(bin) > 0 {
+		return bin
+	}
+
+	// go env -w GOBIN="/go/bin"
+	// e.g: ~/.config/go/env
+	if configDir, err := os.UserConfigDir(); err == nil && len(configDir) > 0 &&
+		godotenv.Load(filepath.Join(configDir, "go", "env")) == nil {
+		if bin := os.Getenv("GOBIN"); len(bin) > 0 {
+			return bin
+		}
+	}
+
+	return filepath.Join(gopath(), "bin")
 }
 
 func gopath() (gp string) {
